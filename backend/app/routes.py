@@ -4,4 +4,5 @@ import time
 
 @app.route("/time")
 def try_test():
-    return {'time': time.time()}
+    # return {'time': time.time()}
+    return "Hello"
