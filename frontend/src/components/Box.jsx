@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
+import React, { useRef, useState } from 'react'
+import { useFrame } from '@react-three/fiber'
 
 function Box(props) {
     // This reference gives us direct access to the THREE.Mesh object
@@ -24,4 +24,4 @@ function Box(props) {
     )
   }
 
-export default Box;
+export default Box
