@@ -1,4 +1,5 @@
 from app import app
+from flask import request
 
 import time
 
@@ -6,3 +7,22 @@ import time
 def try_test():
     # return {'time': time.time()}
     return "Hello"
+
+@app.route("/geolocation", methods = ['POST', 'PUT'])
+def geolocation():
+    if request.method == 'POST':
+        print("Post")
+        print(request.get_json())
+    else:
+        print("Put")
+        print(request.get_json())
+
+    response = {"response": 'hello'}
+    return response
+
+@app.route("/userlocations", methods = ['GET'])
+def userlocations():
+    return {
+        "latitude" : 42.925185,
+        "longitude" : -81.222179
+    }
