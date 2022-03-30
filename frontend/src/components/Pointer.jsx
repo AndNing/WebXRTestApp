@@ -14,7 +14,7 @@ function Pointer(props) {
                 visible
                 ref={cone}
             >
-                <coneGeometry args={[0.2,0.3,32]}/>
+                <coneGeometry args={[0.1,0.2,32]}/>
                 <meshStandardMaterial color={'red'}/>
             </mesh>
             <ObjectHelper axesHelper={2} gridHelperSize={2} gridHelperDivisions={4}/>

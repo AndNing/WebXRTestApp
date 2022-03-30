@@ -6,28 +6,45 @@ import { VRCanvas } from '@react-three/xr'
 import User from './components/User'
 import CameraControls from './components/CameraControls'
 import ObjectHelper from './components/ObjectHelper'
+import ComponentHelper from './components/ComponentHelper'
 
 class App extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
       position : {coords : {latitude : 0, longitude : 0}},
+      deviceOrientation: {alpha: 0, beta: 0, gamma: 0 },
+      userLocation: {coords : {latitude : 0, longitude : 0}},
+      pose: {ax: 0, ay: 0, az: 0},
+      userAngle: {ax: 0, ay: 0, az: 0},
+      bearing: 0
     }
     this.geolocationOptions = {
       maximumAge: 0,
       timeout: 5000,
       enableHighAccuracy: true
     }
+
+    this.rotationEvent = (event) =>  {
+      // console.log('rotate')
+      // console.log(event.alpha + ', ' + event.beta + ',' + event.gamma)
+      this.setState({deviceOrientation: {alpha : event.alpha, beta : event.beta, gamma : event.gamma} })
+      // console.log('Absolute Orientation: ' + event.absolute)
+      // console.log('Device: ' + event.alpha + ' : ' + event.beta + ' : ' + event.gamma)
+    }
+
     this.updatePosition = this.updatePosition.bind(this)
     this.updatePositionError = this.updatePositionError.bind(this)
     this.updateUserLocations = this.updateUserLocations.bind(this)
+    this.rotationEvent = this.rotationEvent.bind(this)
+    this.handleOrientationUpdate = this.handleOrientationUpdate.bind(this)
   }
 
   updatePosition(position) {
     if ((position.coords.latitude !== this.state.position.coords.latitude) || (position.coords.longitude !== this.state.position.coords.longitude)) {
-      console.log('Position Update')
-      console.log('Latitude is :', position.coords.latitude);
-      console.log('Longitude is :', position.coords.longitude);
+      // console.log('Position Update')
+      // console.log('Latitude is :', position.coords.latitude);
+      // console.log('Longitude is :', position.coords.longitude);
       this.setState({
         position: position
       })
@@ -42,7 +59,7 @@ class App extends React.Component {
       }
       fetch('/geolocation', requestOptions)
       .then(response => response.json())
-      .then(data => console.log(data.response))
+      // .then(data => console.log(data.response))
     }
   }
 
@@ -60,25 +77,62 @@ class App extends React.Component {
     })
   }
 
-  calculateBearing(destLat,destLon,startLat,startLon) {
-    const toRadians = (degrees) => degrees * Math.PI / 180
-    const toDegrees = (radians) => radians * 180 / Math.PI
+  toRadians(degrees) {
+    return degrees * Math.PI / 180
+  }
 
-    destLat = toRadians(destLat)
-    destLon = toRadians(destLon)
-    startLat = toRadians(startLat)
-    startLon = toRadians(startLon)
+  toDegrees(radians) {
+    return radians * 180 / Math.PI
+  }
+
+  calculateBearing(destLat,destLon,startLat,startLon) {
+    // const toRadians = (degrees) => degrees * Math.PI / 180
+    // const toDegrees = (radians) => radians * 180 / Math.PI
+
+    destLat = this.toRadians(destLat)
+    destLon = this.toRadians(destLon)
+    startLat = this.toRadians(startLat)
+    startLon = this.toRadians(startLon)
+
+    // console.log(destLat + ' ' + destLon + ' ' + startLat + ' ' + startLon)
 
     let X = Math.cos(destLat) * Math.sin(destLon - startLon)
     let Y = Math.cos(startLat) * Math.sin(destLat) - Math.sin(startLat) * Math.cos(destLat) * Math.cos(destLon - startLon)
-    let bearing = toDegrees(Math.atan2(X,Y))
+    let bearing = this.toDegrees(Math.atan2(X,Y))
+    console.log('Bearing Real: ' + bearing)
+    if (bearing < 0) {
+      bearing = 360 + bearing
+      console.log('Bearing real nonnegative: ' + bearing)
+    }
+
+    // Correct for difference in positive rotation direction between mobile and calculation method
+    bearing = 360 - bearing
     return bearing
   }
 
   updatePointer(userLocationCoords, positionCoords) {
     let bearing = this.calculateBearing(userLocationCoords.latitude, userLocationCoords.longitude, positionCoords.latitude, positionCoords.longitude)
-    console.log("Bearing Update")
-    console.log(bearing)
+    this.setState({bearing: bearing})
+    console.log("Bearing Update " + bearing)
+  }
+
+  handleOrientationUpdate(viewerOrientation) {
+    this.setState({pose: {ax: viewerOrientation.x, ay: viewerOrientation.y, az: viewerOrientation.z}})
+
+    console.log('Device: ' + this.state.deviceOrientation.alpha + ' : ' + 'Viewer: ' + viewerOrientation.z)
+    // console.log('Device: ' + this.state.deviceOrientation.alpha + ' : ' + this.state.deviceOrientation.beta + ' : ' + this.state.deviceOrientation.gamma)
+
+  
+    let differenceAngle = this.state.deviceOrientation.alpha - viewerOrientation.z
+    let virtualBearingAngle = this.state.bearing - differenceAngle
+    // console.log('Orientation Update')
+    console.log('Device Orientation: ' + this.state.deviceOrientation.alpha + ' Viewer Orientation: ' + viewerOrientation.z)
+    console.log('Virtual Bearing: ' + virtualBearingAngle + ' Difference Angle: ' + differenceAngle)
+    // virtualBearingAngle = virtualBearingAngle * Math.PI / 180
+
+
+    this.setState({userAngle: {ax: 0, ay: this.toRadians(virtualBearingAngle), az: 0}})
+    // this.setState({userAngle: {ax: 0, ay: this.toRadians(viewerOrientation.z), az: 0}})
   }
 
   componentDidMount() {
@@ -92,6 +146,12 @@ class App extends React.Component {
       () => this.updateUserLocations(),
       5000
     )
+
+    // rotationEvent = rotationEvent.bind(this)
+
+    window.addEventListener('deviceorientationabsolute', this.rotationEvent)
+
+
   }
 
   componentWillUnmount() {
@@ -101,14 +161,18 @@ class App extends React.Component {
   render() {
     return (
       <div className='App' style={{ width: '100vw', height: '100vh'}}>
-          <Canvas>
+          <ARCanvas>
             <CameraControls/>
             <ambientLight />
             <pointLight position={[10, 10, 10]} />
-            <User/>
-            <ObjectHelper/>
-          </Canvas>
-          <h1>{'Latitude: ' + this.state.position.coords.latitude + ' Longitude: ' + this.state.position.coords.longitude}</h1>
+            <User orientation={{ax : this.state.userAngle.ax, ay: this.state.userAngle.ay, az : this.state.userAngle.az}}/>
+            <ObjectHelper axesHelper={4} gridHelperSize={5} gridHelperDivisions={10}/>
+            <ComponentHelper onOrientationUpdate={this.handleOrientationUpdate}></ComponentHelper>
+          </ARCanvas>
+
+          {/* <h3>{'Latitude: ' + this.state.position.coords.latitude + ' Longitude: ' + this.state.position.coords.longitude}</h3>
+          <h3>{'alpha: ' + this.state.deviceOrientation.alpha + ' beta: ' + this.state.deviceOrientation.beta + ' gamma: ' + this.state.deviceOrientation.gamma}</h3> */}
+          {/* <h3>{'ax: ' + this.state.pose.ax + ' ay: ' + this.state.pose.ay + ' az: ' + this.state.pose.az}</h3> */}
       </div>
     )
   }

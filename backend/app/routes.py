@@ -23,6 +23,6 @@ def geolocation():
 @app.route("/userlocations", methods = ['GET'])
 def userlocations():
     return {
-        "latitude" : 42.925185,
-        "longitude" : -81.222179
+        "latitude" : 43.034342,
+        "longitude" : -81.277753
     }
