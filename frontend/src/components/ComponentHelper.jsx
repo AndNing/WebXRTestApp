@@ -11,7 +11,7 @@ function ComponentHelper(props) {
     useXRFrame((time, xrFrame) => {
         // do something on each frame of an active XR session
         // if (!gotTransform) {
-        if ((Math.floor(time)) % 100 == 0) {
+        if ((Math.floor(time)) % 10 == 0) {
             const xrsession = xrFrame.session
             xrsession.requestReferenceSpace('local').then((refspace) => {
                 let viewerPose = xrFrame.getViewerPose(refspace)

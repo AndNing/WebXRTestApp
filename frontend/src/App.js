@@ -7,6 +7,7 @@ import User from './components/User'
 import CameraControls from './components/CameraControls'
 import ObjectHelper from './components/ObjectHelper'
 import ComponentHelper from './components/ComponentHelper'
+import { Html, Text } from "@react-three/drei"
 
 class App extends React.Component {
   constructor(props) {
@@ -17,7 +18,8 @@ class App extends React.Component {
       userLocation: {coords : {latitude : 0, longitude : 0}},
       pose: {ax: 0, ay: 0, az: 0},
       userAngle: {ax: 0, ay: 0, az: 0},
-      bearing: 0
+      bearing: 0,
+      virtualBearing: 0
     }
     this.geolocationOptions = {
       maximumAge: 0,
@@ -117,20 +119,36 @@ class App extends React.Component {
   }
 
   handleOrientationUpdate(viewerOrientation) {
-    this.setState({pose: {ax: viewerOrientation.x, ay: viewerOrientation.y, az: viewerOrientation.z}})
+    let correctedViewerOrientation = viewerOrientation.z
+    if (correctedViewerOrientation < 0) {
+      correctedViewerOrientation = 360 + correctedViewerOrientation
+    }
 
-    console.log('Device: ' + this.state.deviceOrientation.alpha + ' : ' + 'Viewer: ' + viewerOrientation.z)
+    this.setState({pose: {ax: viewerOrientation.x, ay: viewerOrientation.y, az: correctedViewerOrientation}})
+
+    // console.log('Device: ' + this.state.deviceOrientation.alpha + ' : ' + 'Viewer: ' + viewerOrientation.z)
     // console.log('Device: ' + this.state.deviceOrientation.alpha + ' : ' + this.state.deviceOrientation.beta + ' : ' + this.state.deviceOrientation.gamma)
 
-  
-    let differenceAngle = this.state.deviceOrientation.alpha - viewerOrientation.z
+
+
+
+    let differenceAngle = this.state.deviceOrientation.alpha - correctedViewerOrientation
     let virtualBearingAngle = this.state.bearing - differenceAngle
+    if (virtualBearingAngle > 360) {
+      virtualBearingAngle = (virtualBearingAngle) % 360
+    }
+    else if (virtualBearingAngle < 0) {
+      virtualBearingAngle = 360 + virtualBearingAngle
+    }
+
+
     // console.log('Orientation Update')
-    console.log('Device Orientation: ' + this.state.deviceOrientation.alpha + ' Viewer Orientation: ' + viewerOrientation.z)
-    console.log('Virtual Bearing: ' + virtualBearingAngle + ' Difference Angle: ' + differenceAngle)
+    // console.log('Device Orientation: ' + this.state.deviceOrientation.alpha + ' Viewer Orientation: ' + correctedViewerOrientation)
+    // console.log('Virtual Bearing: ' + virtualBearingAngle + ' Difference Angle: ' + differenceAngle)
     // virtualBearingAngle = virtualBearingAngle * Math.PI / 180
 
 
+    this.setState({virtualBearing: virtualBearingAngle})
     this.setState({userAngle: {ax: 0, ay: this.toRadians(virtualBearingAngle), az: 0}})
     // this.setState({userAngle: {ax: 0, ay: this.toRadians(viewerOrientation.z), az: 0}})
   }
@@ -165,14 +183,25 @@ class App extends React.Component {
             <CameraControls/>
             <ambientLight />
             <pointLight position={[10, 10, 10]} />
-            <User orientation={{ax : this.state.userAngle.ax, ay: this.state.userAngle.ay, az : this.state.userAngle.az}}/>
+            <User orientation={{ax : this.state.userAngle.ax, ay: this.state.userAngle.ay, az : this.state.userAngle.az}} deviceOrientation={{alpha: this.state.deviceOrientation.alpha, beta: this.state.deviceOrientation.beta, gamma: this.state.deviceOrientation.gamma}}/>
             <ObjectHelper axesHelper={4} gridHelperSize={5} gridHelperDivisions={10}/>
             <ComponentHelper onOrientationUpdate={this.handleOrientationUpdate}></ComponentHelper>
+            <React.Suspense fallback={null}>
+              <mesh rotation={[-Math.PI/2,0,0]} position={[0,-0.5,0]}>
+                <Text
+                  scale={[0.1, 0.1, 1]}>
+                  {'Device : ' + this.state.deviceOrientation.alpha.toFixed(1) + ' ' + this.state.deviceOrientation.beta.toFixed(1) + ' ' + this.state.deviceOrientation.gamma.toFixed(1)}
+                  {'\nViewer : ' + this.state.pose.ax.toFixed(1) + ' ' + this.state.pose.ay.toFixed(1) + ' ' + this.state.pose.az.toFixed(1)}
+                  {'\nBearing : ' + this.state.bearing}
+                  {'\n Virtual Bearing : ' + this.state.virtualBearing}
+                </Text>
+              </mesh>
+            </React.Suspense>
           </ARCanvas>
 
           {/* <h3>{'Latitude: ' + this.state.position.coords.latitude + ' Longitude: ' + this.state.position.coords.longitude}</h3>
-          <h3>{'alpha: ' + this.state.deviceOrientation.alpha + ' beta: ' + this.state.deviceOrientation.beta + ' gamma: ' + this.state.deviceOrientation.gamma}</h3> */}
-          {/* <h3>{'ax: ' + this.state.pose.ax + ' ay: ' + this.state.pose.ay + ' az: ' + this.state.pose.az}</h3> */}
+          <h3>{'alpha: ' + this.state.deviceOrientation.alpha.toFixed(1) + ' beta: ' + this.state.deviceOrientation.beta.toFixed(1) + ' gamma: ' + this.state.deviceOrientation.gamma.toFixed(1)}</h3>
+          <h3>{'ax: ' + this.state.pose.ax + ' ay: ' + this.state.pose.ay + ' az: ' + this.state.pose.az}</h3> */}
       </div>
     )
   }
