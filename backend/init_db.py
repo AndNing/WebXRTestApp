@@ -8,20 +8,28 @@ with open('schema.sql') as f:
 cur = connection.cursor()
 
 cur.execute("INSERT INTO devices (devicename, latitude, longitude) VALUES (?, ?, ?)",
-            ('South', 43.029919, -81.271674)
+            ('South - Port Stanley', 42.668726, -81.216186)
             )
 
 cur.execute("INSERT INTO devices (devicename, latitude, longitude) VALUES (?, ?, ?)",
-            ('North', 43.041369, -81.278182)
+            ('North - Sudbury', 46.492447, -80.991020)
             )
 
 cur.execute("INSERT INTO devices (devicename, latitude, longitude) VALUES (?, ?, ?)",
-            ('East', 43.041212, -81.270085)
+            ('East - Buffalo', 42.986253, -78.902066)
             )
 
 cur.execute("INSERT INTO devices (devicename, latitude, longitude) VALUES (?, ?, ?)",
-            ('West', 43.038107, -81.281274)
-            )             
+            ('West - Sarnia', 43.005863, -82.386442)
+            )
+
+cur.execute("INSERT INTO devices (devicename, latitude, longitude) VALUES (?, ?, ?)",
+            ('Western Student Recreation Centre', 43.003011, -81.274808)
+            )            
+
+cur.execute("INSERT INTO devices (devicename, latitude, longitude) VALUES (?, ?, ?)",
+            ('London International Airport', 43.029574, -81.146803)
+            )     
 
 connection.commit()
 connection.close()

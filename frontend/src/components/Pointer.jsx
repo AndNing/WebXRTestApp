@@ -5,7 +5,7 @@ import ObjectHelper from './ObjectHelper';
 
 function Pointer(props) {
     const cone = useRef()
-    useHelper(cone, BoxHelper, 'cyan')
+    // useHelper(cone, BoxHelper, 'cyan')
 
     return (
         <mesh
@@ -17,7 +17,7 @@ function Pointer(props) {
                 <coneGeometry args={[0.1,0.2,32]}/>
                 <meshStandardMaterial color={'red'}/>
             </mesh>
-            <ObjectHelper axesHelper={2} gridHelperSize={2} gridHelperDivisions={4}/>
+            {/* <ObjectHelper axesHelper={2} gridHelperSize={2} gridHelperDivisions={4}/> */}
         </mesh>
     )
 }

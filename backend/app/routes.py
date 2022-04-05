@@ -1,4 +1,3 @@
-from asyncio.windows_events import NULL
 from app import app
 import sqlite3
 from flask import request, render_template
@@ -11,7 +10,7 @@ def get_db_connection():
 
 def make_query(query,values):
     conn = get_db_connection()
-    rows = NULL
+    rows = None
     with conn:
         conn.row_factory = sqlite3.Row
         curs = conn.cursor()
